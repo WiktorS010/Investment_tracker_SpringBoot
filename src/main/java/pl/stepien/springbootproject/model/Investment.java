@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -19,9 +20,9 @@ public class Investment {
     private Double quantityOfCryptocurrencyInDolar;
     private ZonedDateTime created;
     private Double enterPrice;
-//    private LocalDateTime beingActiveTime;
-//    private Double currentIncomeInPercentages;
+    private Double currentIncomeInPercentages;
     private Double currentIncomeInDollars;
+    private Duration beingActive;
     @ManyToOne
     private User user;
     @ManyToOne

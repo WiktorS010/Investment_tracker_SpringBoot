@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import pl.stepien.springbootproject.model.Investment;
 import pl.stepien.springbootproject.repository.InvestmentRepository;
 import pl.stepien.springbootproject.service.MathMethods;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+
+import java.time.*;
 import java.util.List;
 
 
@@ -24,25 +23,21 @@ public class InvestmentController {
     @GetMapping("")
     public String showInvestments(Model model) {
         MathMethods mathMethods = new MathMethods();
-        List<Investment> investments = investmentRepository.findAllByUser_Id(1l);
+        List<Investment> investments = investmentRepository.findAllByUser_Id(1L);
         for (Investment investment : investments) {
             Double price = investment.getEnterPrice();
-            Double income = (investment.getQuantityOfCryptocurrency() *
-                            cryptoConnection.getCrypto().get(investment.getCryptocurrency().getId().intValue() - 1).getPrice()) -
-                            (price * investment.getQuantityOfCryptocurrency());
-
-            investment.setCurrentIncomeInDollars(mathMethods.round(income, 3));
+            double income = (investment.getQuantityOfCryptocurrency() *
+                    cryptoConnection.getCrypto().get(investment.getCryptocurrency().getId().intValue() - 1).getPrice()) -
+                    (price * investment.getQuantityOfCryptocurrency());
+            double incomeInPercentages = (income / price * investment.getQuantityOfCryptocurrency()) * 100;
+            investment.setCurrentIncomeInDollars(mathMethods.round(income, 2));
+            investment.setCurrentIncomeInPercentages(mathMethods.round(incomeInPercentages, 2));
+//            Duration d = Duration.between(investment.getCreated() , Instant.now ());
+//            investment.setBeingActive(d);
         }
         model.addAttribute("investments", investments);// user id z security
 
         return "investments";
-    }
-
-    // USUNIĘTE INWESTYCJE , ZAPISUJA SIE NA JAKIŚ CZAS X
-
-    @GetMapping("/old")
-    public String oldInvestments() {
-        return "oldInvestments";
     }
 
     // DODAWANIE INWESTYCJI PRZEZ STRONĘ GŁÓWNĄ PO KLIKNIĘCIU W SUCCESS PRZY KRYPTOWALUCIE
@@ -65,16 +60,34 @@ public class InvestmentController {
         investment.setCreated(date);
 //        investment.setUser();
         investment.setCurrentIncomeInDollars(0.0);
-
+        investment.setCurrentIncomeInPercentages(0.0);
+//        investment.setBeingActive(Duration.between(investment.getCreated() , Instant.now ()));
         investmentRepository.save(investment);
+
         return "redirect:/investments";
     }
 
-    // USUWANIE INWESTYCJI
-    @GetMapping("/close/{id}")
-    public String deleteInvestment(@PathVariable Long id) {
+    // WIDOK USUWANIA INWESTYCJI
 
-        investmentRepository.deleteById(id);
+    @GetMapping("/close/{id}")
+    public String deleteInvestmentProcess(Model model, @PathVariable Long id) {
+        model.addAttribute("investment", investmentRepository.findById(id).get());
         return "deleteInvestment";
+    }
+
+    // INWESTYCJA USUNIĘTA : PODSUMOWANIE
+
+    @GetMapping("/close/summary/{id}")
+    public String deleteInvestmentDone(@PathVariable Long id) {
+        investmentRepository.deleteById(id);
+        return "deleteInvestmentSummary";
+    }
+
+
+    // USUNIĘTE INWESTYCJE , ZAPISUJA SIE NA JAKIŚ CZAS X
+
+    @GetMapping("/old")
+    public String oldInvestments() {
+        return "oldInvestments";
     }
 }
